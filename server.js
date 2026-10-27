@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
-const app=express();app.use(express.json({limit:'5mb'}));const app=express();app.use(express.json({limit:'5mb'}));app.use(express.static(__dirname));
+app.use(express.json({ limit: '5mb' }));
 const DB=process.env.DATA_FILE||path.join(__dirname,'data.json');
 const hash=p=>crypto.createHash('sha256').update(String(p)).digest('hex');
 function initial(){return {owner:{email:process.env.OWNER_EMAIL||'owner@smartattend.com',passwordHash:hash(process.env.OWNER_PASSWORD||'Owner@123')},colleges:[{name:'Raj Kumar College',code:'RK',active:true,students:480,username:'rkcollege',passwordHash:hash('RK@12345')},{name:'Shree Shyam College',code:'SS',active:true,students:320,username:'sscollege',passwordHash:hash('SS@12345')},{name:'Maa Gayatri College',code:'MG',active:true,students:210,username:'mgcollege',passwordHash:hash('MG@12345')},{name:'Krishna Tech College',code:'KT',active:true,students:165,username:'ktcollege',passwordHash:hash('KT@12345')},{name:'Anand Program College',code:'AP',active:false,students:73,username:'apcollege',passwordHash:hash('AP@12345')}],staff:[{id:'staff-demo',collegeCode:'RK',name:'Staff Member',username:'staff@demo.com',passwordHash:hash('Staff123'),active:true}],features:['Attendance Management','Student Management','Staff Management','Reports','Face Recognition','QR Attendance','Notifications','College Requests','Export Reports','Backup & Restore','Announcements','User Management'].map(name=>({name,active:true})),settings:{name:'Smart Attendance',color:'#4169f5',announcement:'System is running smoothly!',background:'#f2f6fd',animation:true,theme:'light'},logs:[],collegeData:{}}}
