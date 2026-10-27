@@ -1,4 +1,10 @@
-const express=require('express');const fs=require('fs');const path=require('path');const crypto=require('crypto');
+cconst express = require('express');
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+
+const app = express();
+app.use(express.json({ limit: '5mb' }));
 const app=express();app.use(express.json({limit:'5mb'}));const app=express();app.use(express.json({limit:'5mb'}));app.use(express.static(__dirname));
 const DB=process.env.DATA_FILE||path.join(__dirname,'data.json');
 const hash=p=>crypto.createHash('sha256').update(String(p)).digest('hex');
