@@ -273,6 +273,128 @@ app.put('/api/college-state', async (req, res) => {
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
+// List staff accounts belonging to the logged-in college
+app.get('/api/staff', auth('college'), async (req, res) => {
+  try {
+    const { data: college, error: collegeError } = await supabase
+      .from('colleges')
+      .select('id')
+      .eq('code', req.session.code)
+      .maybeSingle();
+
+    if (collegeError) throw collegeError;
+    if (!college) {
+      return res.status(404).json({ error: 'College not found' });
+    }
+
+    const { data, error } = await supabase
+      .from('staff')
+      .select('id, name, username, active, college_id')
+      .eq('college_id', college.id);
+
+    if (error) throw error;
+    res.json({ staff: data || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add a staff account
+app.post('/api/staff', auth('college'), async (req, res) => {
+  try {
+    const name = String(req.body?.name || '').trim();
+    const username = String(req.body?.username || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+
+    if (!name || !username || password.length < 6) {
+      return res.status(400).json({
+        error: 'Name, username and password of at least 6 characters are required'
+      });
+    }
+
+    const { data: college, error: collegeError } = await supabase
+      .from('colleges')
+      .select('id')
+      .eq('code', req.session.code)
+      .maybeSingle();
+
+    if (collegeError) throw collegeError;
+    if (!college) {
+      return res.status(404).json({ error: 'College not found' });
+    }
+
+    const { data: existing, error: checkError } = await supabase
+      .from('staff')
+      .select('id')
+      .ilike('username', username)
+      .limit(1);
+
+    if (checkError) throw checkError;
+    if (existing?.length) {
+      return res.status(409).json({
+        error: 'This username already exists. Use another username.'
+      });
+    }
+
+    const { data, error } = await supabase
+      .from('staff')
+      .insert({
+        college_id: college.id,
+        name,
+        username,
+        password_hash: hash(password),
+        active: true
+      })
+      .select('id, name, username, active, college_id')
+      .single();
+
+    if (error) throw error;
+    res.status(201).json({ staff: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Remove a staff account belonging to the logged-in college
+app.delete('/api/staff/:id', auth('college'), async (req, res) => {
+  try {
+    const { data: college, error: collegeError } = await supabase
+      .from('colleges')
+      .select('id')
+      .eq('code', req.session.code)
+      .maybeSingle();
+
+    if (collegeError) throw collegeError;
+    if (!college) {
+      return res.status(404).json({ error: 'College not found' });
+    }
+
+    const { data: staff, error: staffError } = await supabase
+      .from('staff')
+      .select('id, college_id')
+      .eq('id', req.params.id)
+      .maybeSingle();
+
+    if (staffError) throw staffError;
+
+    if (!staff || String(staff.college_id) !== String(college.id)) {
+      return res.status(404).json({
+        error: 'Staff account not found in your college'
+      });
+    }
+
+    const { error } = await supabase
+      .from('staff')
+      .delete()
+      .eq('id', staff.id)
+      .eq('college_id', college.id);
+
+    if (error) throw error;
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 app.get('/api/public-config', async (req, res) => {
   try {
     const global = await getGlobalState();
